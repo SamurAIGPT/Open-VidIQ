@@ -12,7 +12,6 @@ import {
   Loader2,
   BarChart2,
   AlertCircle,
-  Zap,
 } from "lucide-react";
 import { VideoCard } from "@/components/VideoCard";
 import { TagBadge } from "@/components/TagBadge";
@@ -21,7 +20,7 @@ import { formatNumber } from "@/lib/utils";
 
 function KeywordsContent() {
   const searchParams = useSearchParams();
-  const initialQuery = searchParams.get("q") || "ai video tutorial";
+  const initialQuery = searchParams.get("q") || "";
 
   const [keyword, setKeyword] = useState(initialQuery);
   const [location, setLocation] = useState("United States");
@@ -35,6 +34,7 @@ function KeywordsContent() {
     if (!searchKw.trim()) return;
     setLoading(true);
     setError(null);
+    setData(null);
 
     try {
       const res = await fetch(
@@ -42,8 +42,10 @@ function KeywordsContent() {
           location
         )}&depth=${depth}`
       );
-      if (!res.ok) throw new Error("Failed to load keyword rankings");
       const json = await res.json();
+      if (!res.ok) {
+        throw new Error(json.error || "Failed to load keyword rankings");
+      }
       setData(json);
     } catch (err: any) {
       setError(err.message || "An error occurred");
@@ -89,14 +91,6 @@ function KeywordsContent() {
             <span className="font-mono text-neutral-300">/seo-youtube-organic</span>
           </p>
         </div>
-
-        {/* Demo notification if active */}
-        {data?.isDemo && (
-          <div className="flex items-center gap-2 rounded-xl border border-purple-500/30 bg-purple-500/10 px-3 py-1.5 text-xs text-purple-300">
-            <Zap className="h-4 w-4 text-purple-400" />
-            <span>Showing verified demo cache. Live MuAPI calls active when key is configured.</span>
-          </div>
-        )}
       </div>
 
       {/* Search & Filter Bar */}
@@ -161,9 +155,12 @@ function KeywordsContent() {
 
       {/* Error state */}
       {error && (
-        <div className="mt-6 flex items-center gap-2 rounded-2xl border border-rose-500/30 bg-rose-500/10 p-4 text-sm text-rose-300">
-          <AlertCircle className="h-5 w-5 text-rose-400 shrink-0" />
-          <span>{error}</span>
+        <div className="mt-6 flex items-start gap-3 rounded-2xl border border-rose-500/30 bg-rose-500/10 p-4 text-sm text-rose-300">
+          <AlertCircle className="h-5 w-5 text-rose-400 shrink-0 mt-0.5" />
+          <div>
+            <span className="font-bold">Error querying YouTube SERP:</span>
+            <p className="mt-1 text-xs text-rose-200">{error}</p>
+          </div>
         </div>
       )}
 
@@ -177,7 +174,18 @@ function KeywordsContent() {
             Querying YouTube SERP for &quot;{keyword}&quot;...
           </p>
           <p className="mt-1 text-xs text-neutral-400">
-            Gathering organic rankings, view velocity, and competitor tags
+            Polling MuAPI task until completed...
+          </p>
+        </div>
+      )}
+
+      {/* Initial Empty state */}
+      {!loading && !data && !error && (
+        <div className="mt-16 flex flex-col items-center justify-center text-center rounded-3xl border border-dashed border-neutral-800 p-12">
+          <TrendingUp className="h-10 w-10 text-neutral-600 mb-3" />
+          <h3 className="text-sm font-bold text-neutral-300">No Keyword Searched Yet</h3>
+          <p className="mt-1 text-xs text-neutral-500 max-w-sm">
+            Enter any YouTube search topic above to analyze real-time rankings and competitor tags.
           </p>
         </div>
       )}
@@ -189,7 +197,7 @@ function KeywordsContent() {
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
             <MetricCard
               label="Overall Keyword Score"
-              value={`${data.overall_keyword_score || 72}/100`}
+              value={`${data.overall_keyword_score || 0}/100`}
               subtext={
                 data.overall_keyword_score >= 70
                   ? "Great opportunity: High interest vs competition"
@@ -201,7 +209,7 @@ function KeywordsContent() {
             />
             <MetricCard
               label="Estimated Search Volume"
-              value={formatNumber(data.search_volume_est || 250000)}
+              value={formatNumber(data.search_volume_est || 0)}
               subtext="Estimated monthly search queries"
               trend="+14% YoY"
               trendPositive={true}
@@ -209,13 +217,13 @@ function KeywordsContent() {
             />
             <MetricCard
               label="Competition Level"
-              value={`${data.competition_score || 45}/100`}
+              value={`${data.competition_score || 0}/100`}
               subtext={
                 data.competition_score > 65
                   ? "High competition from established channels"
                   : "Medium competition, easy to rank with solid SEO"
               }
-              trend="Moderate"
+              trend="Score"
               trendPositive={data.competition_score < 60}
               icon={<Tag className="h-4 w-4" />}
             />

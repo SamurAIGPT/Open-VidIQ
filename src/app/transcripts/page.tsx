@@ -9,17 +9,15 @@ import {
   Check,
   Download,
   Clock,
-  Sparkles,
   Loader2,
   AlertCircle,
-  ExternalLink,
   FileText,
 } from "lucide-react";
 import { formatSecondsToTimestamp, extractYoutubeVideoId } from "@/lib/utils";
 
 function TranscriptsContent() {
   const searchParams = useSearchParams();
-  const initialId = searchParams.get("id") || searchParams.get("url") || "X_qZ5jQp1kA";
+  const initialId = searchParams.get("id") || searchParams.get("url") || "";
 
   const [inputUrl, setInputUrl] = useState(initialId);
   const [lang, setLang] = useState("en");
@@ -36,13 +34,16 @@ function TranscriptsContent() {
 
     setLoading(true);
     setError(null);
+    setData(null);
 
     try {
       const res = await fetch(
         `/api/subtitles?id=${encodeURIComponent(cleanId)}&lang=${encodeURIComponent(language)}`
       );
-      if (!res.ok) throw new Error("Failed to load video subtitles");
       const json = await res.json();
+      if (!res.ok) {
+        throw new Error(json.error || "Failed to load video subtitles");
+      }
       setData(json);
     } catch (err: any) {
       setError(err.message || "An error occurred");
@@ -175,9 +176,12 @@ function TranscriptsContent() {
 
       {/* Error display */}
       {error && (
-        <div className="mt-6 flex items-center gap-2 rounded-2xl border border-rose-500/30 bg-rose-500/10 p-4 text-sm text-rose-300">
-          <AlertCircle className="h-5 w-5 text-rose-400 shrink-0" />
-          <span>{error}</span>
+        <div className="mt-6 flex items-start gap-3 rounded-2xl border border-rose-500/30 bg-rose-500/10 p-4 text-sm text-rose-300">
+          <AlertCircle className="h-5 w-5 text-rose-400 shrink-0 mt-0.5" />
+          <div>
+            <span className="font-bold">Error fetching subtitles:</span>
+            <p className="mt-1 text-xs text-rose-200">{error}</p>
+          </div>
         </div>
       )}
 
@@ -189,6 +193,20 @@ function TranscriptsContent() {
           </div>
           <p className="mt-4 text-sm font-semibold text-white">
             Extracting synchronized captions and timestamps...
+          </p>
+          <p className="mt-1 text-xs text-neutral-400">
+            Polling MuAPI task until completed...
+          </p>
+        </div>
+      )}
+
+      {/* Initial Empty state */}
+      {!loading && !data && !error && (
+        <div className="mt-16 flex flex-col items-center justify-center text-center rounded-3xl border border-dashed border-neutral-800 p-12">
+          <Subtitles className="h-10 w-10 text-neutral-600 mb-3" />
+          <h3 className="text-sm font-bold text-neutral-300">No Captions Loaded</h3>
+          <p className="mt-1 text-xs text-neutral-500 max-w-sm">
+            Enter any YouTube video URL or ID above to extract full synchronized transcripts.
           </p>
         </div>
       )}

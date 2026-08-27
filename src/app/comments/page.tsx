@@ -7,9 +7,7 @@ import {
   Search,
   ThumbsUp,
   HelpCircle,
-  TrendingUp,
   Smile,
-  Sparkles,
   Loader2,
   AlertCircle,
   Lightbulb,
@@ -18,7 +16,7 @@ import { formatNumber, extractYoutubeVideoId } from "@/lib/utils";
 
 function CommentsContent() {
   const searchParams = useSearchParams();
-  const initialId = searchParams.get("id") || searchParams.get("url") || "X_qZ5jQp1kA";
+  const initialId = searchParams.get("id") || searchParams.get("url") || "";
 
   const [inputUrl, setInputUrl] = useState(initialId);
   const [depth, setDepth] = useState(20);
@@ -32,13 +30,16 @@ function CommentsContent() {
 
     setLoading(true);
     setError(null);
+    setData(null);
 
     try {
       const res = await fetch(
         `/api/comments?id=${encodeURIComponent(cleanId)}&depth=${depthVal}`
       );
-      if (!res.ok) throw new Error("Failed to load video comments");
       const json = await res.json();
+      if (!res.ok) {
+        throw new Error(json.error || "Failed to load video comments");
+      }
       setData(json);
     } catch (err: any) {
       setError(err.message || "An error occurred");
@@ -59,10 +60,10 @@ function CommentsContent() {
   };
 
   const sentiment = data?.sentiment_breakdown || {
-    positive: 75,
-    neutral: 15,
-    question: 8,
-    negative: 2,
+    positive: 0,
+    neutral: 0,
+    question: 0,
+    negative: 0,
   };
 
   return (
@@ -127,9 +128,12 @@ function CommentsContent() {
 
       {/* Error state */}
       {error && (
-        <div className="mt-6 flex items-center gap-2 rounded-2xl border border-rose-500/30 bg-rose-500/10 p-4 text-sm text-rose-300">
-          <AlertCircle className="h-5 w-5 text-rose-400 shrink-0" />
-          <span>{error}</span>
+        <div className="mt-6 flex items-start gap-3 rounded-2xl border border-rose-500/30 bg-rose-500/10 p-4 text-sm text-rose-300">
+          <AlertCircle className="h-5 w-5 text-rose-400 shrink-0 mt-0.5" />
+          <div>
+            <span className="font-bold">Error analyzing comments:</span>
+            <p className="mt-1 text-xs text-rose-200">{error}</p>
+          </div>
         </div>
       )}
 
@@ -141,6 +145,20 @@ function CommentsContent() {
           </div>
           <p className="mt-4 text-sm font-semibold text-white">
             Extracting viewer comments & running sentiment heuristics...
+          </p>
+          <p className="mt-1 text-xs text-neutral-400">
+            Polling MuAPI task until completed...
+          </p>
+        </div>
+      )}
+
+      {/* Initial Empty state */}
+      {!loading && !data && !error && (
+        <div className="mt-16 flex flex-col items-center justify-center text-center rounded-3xl border border-dashed border-neutral-800 p-12">
+          <MessageSquare className="h-10 w-10 text-neutral-600 mb-3" />
+          <h3 className="text-sm font-bold text-neutral-300">No Video Comments Analyzed Yet</h3>
+          <p className="mt-1 text-xs text-neutral-500 max-w-sm">
+            Paste any YouTube video URL or ID above to extract audience feedback and discover video ideas.
           </p>
         </div>
       )}

@@ -17,9 +17,10 @@ import {
 import { TagBadge } from "@/components/TagBadge";
 
 export default function CopilotPage() {
-  const [topic, setTopic] = useState("AI Video Creation in 2026");
+  const [topic, setTopic] = useState("");
   const [loading, setLoading] = useState(false);
   const [data, setData] = useState<any>(null);
+  const [error, setError] = useState<string | null>(null);
   const [copiedTitle, setCopiedTitle] = useState<number | null>(null);
   const [copiedDesc, setCopiedDesc] = useState(false);
   const [copiedTags, setCopiedTags] = useState(false);
@@ -29,17 +30,22 @@ export default function CopilotPage() {
     if (!topic.trim()) return;
 
     setLoading(true);
+    setError(null);
+    setData(null);
+
     try {
       const res = await fetch("/api/copilot", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ topic }),
       });
-      if (!res.ok) throw new Error("Failed to generate copilot ideas");
       const json = await res.json();
+      if (!res.ok) {
+        throw new Error(json.error || "Failed to generate copilot ideas");
+      }
       setData(json);
     } catch (err: any) {
-      console.error(err);
+      setError(err.message || "An error occurred");
     } finally {
       setLoading(false);
     }
@@ -115,6 +121,32 @@ export default function CopilotPage() {
           </button>
         </div>
       </form>
+
+      {/* Error state */}
+      {error && (
+        <div className="mt-6 flex items-start gap-3 rounded-2xl border border-rose-500/30 bg-rose-500/10 p-4 text-sm text-rose-300">
+          <div className="h-5 w-5 text-rose-400 shrink-0 mt-0.5">⚠️</div>
+          <div>
+            <span className="font-bold">Error generating copilot ideas:</span>
+            <p className="mt-1 text-xs text-rose-200">{error}</p>
+          </div>
+        </div>
+      )}
+
+      {/* Loading state */}
+      {loading && (
+        <div className="mt-16 flex flex-col items-center justify-center text-center">
+          <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-amber-500/10 text-amber-400 border border-amber-500/20 animate-pulse">
+            <Loader2 className="h-7 w-7 animate-spin" />
+          </div>
+          <p className="mt-4 text-sm font-semibold text-white">
+            Generating high-converting title hooks, SEO descriptions, and thumbnail prompts...
+          </p>
+          <p className="mt-1 text-xs text-neutral-400">
+            Polling MuAPI task until completed...
+          </p>
+        </div>
+      )}
 
       {/* Results Section */}
       {data && (

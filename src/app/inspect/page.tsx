@@ -6,9 +6,6 @@ import {
   CheckCircle2,
   AlertTriangle,
   XCircle,
-  Eye,
-  ThumbsUp,
-  MessageSquare,
   Clock,
   UserCheck,
   Tag,
@@ -26,7 +23,7 @@ import { formatNumber, formatDuration, formatTimeAgo, extractYoutubeVideoId } fr
 
 function InspectContent() {
   const searchParams = useSearchParams();
-  const initialId = searchParams.get("id") || searchParams.get("url") || "X_qZ5jQp1kA";
+  const initialId = searchParams.get("id") || searchParams.get("url") || "";
 
   const [inputUrl, setInputUrl] = useState(initialId);
   const [loading, setLoading] = useState(false);
@@ -41,11 +38,14 @@ function InspectContent() {
 
     setLoading(true);
     setError(null);
+    setData(null);
 
     try {
       const res = await fetch(`/api/video?id=${encodeURIComponent(cleanId)}`);
-      if (!res.ok) throw new Error("Failed to audit YouTube video");
       const json = await res.json();
+      if (!res.ok) {
+        throw new Error(json.error || "Failed to audit YouTube video");
+      }
       setData(json);
     } catch (err: any) {
       setError(err.message || "An error occurred");
@@ -126,9 +126,12 @@ function InspectContent() {
 
       {/* Error display */}
       {error && (
-        <div className="mt-6 flex items-center gap-2 rounded-2xl border border-rose-500/30 bg-rose-500/10 p-4 text-sm text-rose-300">
-          <AlertCircle className="h-5 w-5 text-rose-400 shrink-0" />
-          <span>{error}</span>
+        <div className="mt-6 flex items-start gap-3 rounded-2xl border border-rose-500/30 bg-rose-500/10 p-4 text-sm text-rose-300">
+          <AlertCircle className="h-5 w-5 text-rose-400 shrink-0 mt-0.5" />
+          <div>
+            <span className="font-bold">Error auditing video:</span>
+            <p className="mt-1 text-xs text-rose-200">{error}</p>
+          </div>
         </div>
       )}
 
@@ -140,6 +143,20 @@ function InspectContent() {
           </div>
           <p className="mt-4 text-sm font-semibold text-white">
             Auditing video metadata, tags, and engagement...
+          </p>
+          <p className="mt-1 text-xs text-neutral-400">
+            Polling MuAPI task until completed...
+          </p>
+        </div>
+      )}
+
+      {/* Initial Empty state */}
+      {!loading && !data && !error && (
+        <div className="mt-16 flex flex-col items-center justify-center text-center rounded-3xl border border-dashed border-neutral-800 p-12">
+          <CheckCircle2 className="h-10 w-10 text-neutral-600 mb-3" />
+          <h3 className="text-sm font-bold text-neutral-300">No Video Inspected Yet</h3>
+          <p className="mt-1 text-xs text-neutral-500 max-w-sm">
+            Paste any YouTube video URL or ID above to run a comprehensive 0–100 SEO audit and extract hidden tags.
           </p>
         </div>
       )}
@@ -227,7 +244,7 @@ function InspectContent() {
                   <div>
                     <span className="text-[10px] font-bold uppercase text-neutral-400">Like Ratio</span>
                     <p className="text-lg font-black text-emerald-400">
-                      {audit.stats?.likeRatio?.toFixed(1)}%
+                      {audit.stats?.likeRatio?.toFixed(1) || 0}%
                     </p>
                   </div>
                 </div>
@@ -366,7 +383,7 @@ function InspectContent() {
               </div>
             ) : (
               <p className="text-xs text-neutral-500">
-                No video tags found on this upload. Adding 15+ tags will improve indexing.
+                No video tags found on this upload.
               </p>
             )}
           </div>
