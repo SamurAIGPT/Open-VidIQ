@@ -23,6 +23,9 @@ export function getApiKey(): string | null {
 }
 
 export function isLiveApiConfigured(): boolean {
+  if (process.env.DEMO_MODE === "true" || process.env.NEXT_PUBLIC_DEMO_MODE === "true") {
+    return false;
+  }
   const k = getApiKey();
   return Boolean(k && k.length > 10 && !k.includes("your_"));
 }
@@ -90,7 +93,7 @@ async function poll(
   }
 
   const intervalMs = opts.intervalMs ?? 1500;
-  const timeoutMs = opts.timeoutMs ?? 60_000;
+  const timeoutMs = opts.timeoutMs ?? 15_000;
   const start = Date.now();
 
   while (Date.now() - start < timeoutMs) {
