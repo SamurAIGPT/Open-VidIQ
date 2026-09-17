@@ -142,6 +142,8 @@ npm start
 - [Open-Pomelli](https://github.com/SamurAIGPT/Open-Pomelli) — Open source alternative to Google Pomelli (brand campaigns & assets)
 - [Open-Poe-AI](https://github.com/Anil-matcha/Open-Poe-AI) — Open source alternative to Poe AI
 - [muapiapp](https://github.com/SamurAIGPT/muapiapp) — Generative media & SEO API platform
+- [awesome-vibecoded-saas](https://github.com/Anil-matcha/awesome-vibecoded-saas) — broader catalog of open-source SaaS alternatives featuring this creator-research workflow.
+- [Muapi open-source alternatives](https://muapi.ai/open-source/alternative) — compare the creator-research workflow with the paid tools it targets.
 
 ---
 
